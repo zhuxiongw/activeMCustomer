@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>  
+<beans xmlns="http://www.springframework.org/schema/beans"  
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:p="http://www.springframework.org/schema/p"  
+    xmlns:context="http://www.springframework.org/schema/context"  
+    xmlns:aop="http://www.springframework.org/schema/aop" xmlns:tx="http://www.springframework.org/schema/tx"  
+   xsi:schemaLocation="http://www.springframework.org/schema/beans    
+           http://www.springframework.org/schema/beans/spring-beans-4.0.xsd    
+           http://www.springframework.org/schema/aop     
+           http://www.springframework.org/schema/aop/spring-aop-4.0.xsd    
+           http://www.springframework.org/schema/tx    
+           http://www.springframework.org/schema/tx/spring-tx-4.0.xsd    
+           http://www.springframework.org/schema/context    
+           http://www.springframework.org/schema/context/spring-context-4.0.xsd"  
+    default-autowire="byName" default-lazy-init="false"> 
+    
+    <!-- MQ工厂  -->
+    <bean id="tegetConnectionFactory" class="org.apache.activemq.ActiveMQConnectionFactory">
+    	<property name="brokerURL" value="${activemq.brokerURL}"></property>
+    	<property name="userName" value="${activemq.userName}"></property>
+		<property name="password" value="${activemq.password}"></property>
+    </bean>
+    
+    <!-- 消息队列连接池 -->
+    <bean id="pooledConnectionFactory" class="org.apache.activemq.jms.pool.PooledConnectionFactory">
+    	<property name="connectionFactory" ref="tegetConnectionFactory"></property>
+    	<property name="maxConnections" value="${activemq.pool.maxConnections}"></property>
+    </bean>
+    
+    <!-- spring管理activeMQ的 入口 -->
+    <bean id="connectionFactory" class="org.springframework.jms.connection.SingleConnectionFactory">
+    	<property name="targetConnectionFactory" ref="pooledConnectionFactory"></property>
+    </bean>
+    
+    <bean id="mailQueue" class="org.apache.activemq.command.ActiveMQTopic">
+    	<constructor-arg>
+    		<value>${activemq.queueName}</value>
+    	</constructor-arg>
+    </bean>
+    
+    <!-- 消息模板 -->
+    
+    <bean id="jmsTemplate" class="org.springframework.jms.core.JmsTemplate">
+    	<property name="connectionFactory" ref="connectionFactory"></property>
+    	<property name="defaultDestination" ref="mailQueue"></property>
+    </bean>
+    
+    
+     <!-- 将连接工厂、目标对了、自定义监听注入jms模板 -->  
+    <bean id="sessionAwareListenerContainer"  
+        class="org.springframework.jms.listener.DefaultMessageListenerContainer">  
+        <property name="connectionFactory" ref="connectionFactory" />  
+        <property name="destination" ref="mailQueue" />  
+        <property name="messageListener" ref="mailQueueMessageListener" />  
+    </bean> 
+</beans>
