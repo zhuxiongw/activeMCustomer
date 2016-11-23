@@ -15,7 +15,9 @@ import org.springframework.stereotype.Component;
 import com.alibaba.fastjson.JSONObject;
 import com.vivebest.activemq.entity.Mail;
 import com.vivebest.activemq.service.MailService;
-
+/**
+ * 消息队列监听
+ */
 @Component
 public class MailQueueMessageListener implements SessionAwareMessageListener<Message> {
 	@Autowired
